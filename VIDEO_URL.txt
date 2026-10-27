@@ -1,0 +1,11 @@
+Video demo: [Recording in progress]
+
+Demo script outline (3-5 min):
+1. (0:00-0:20) Problem + solution overview
+2. (0:20-1:50) Demo as Alice: create, edit, format, upload file
+3. (1:50-2:50) Sharing feature: share with Bob/Carol, show role differences
+4. (2:50-3:35) Architecture: access control, autosave, import pipeline
+5. (3:35-4:05) Deliberate scope cuts: why no real-time, version history, OAuth
+6. (4:05-4:45) AI acceleration: what was generated vs. reviewed
+
+Video will be recorded after confirming the live URL works.
