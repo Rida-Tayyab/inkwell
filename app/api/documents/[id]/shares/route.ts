@@ -88,7 +88,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   }
 }
 
-export async function DELETE(request: Request, { params }: { params: Promise<{ id: string; userId: string }> }) {
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const userId = await getCurrentUserId();
   if (!userId) {
     return apiError(401, 'UNAUTHORIZED', 'Not authenticated');

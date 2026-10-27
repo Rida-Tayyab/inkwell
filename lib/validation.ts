@@ -11,8 +11,8 @@ export const createDocumentSchema = z.object({
 
 export const updateDocumentSchema = z.object({
   title: z.string().optional(),
-  content: z.record(z.any()).optional(),
-  baseVersion: z.number('baseVersion must be a number'),
+  content: z.record(z.string(), z.any()).optional(),
+  baseVersion: z.number(),
 });
 
 export const shareDocumentSchema = z.object({

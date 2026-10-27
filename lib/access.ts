@@ -34,7 +34,7 @@ export async function getRole(userId: string, documentId: string): Promise<Role>
 export function can(role: Role, action: Action): boolean {
   if (!role) return false;
 
-  const permissions: Record<Role, Set<Action>> = {
+  const permissions: Record<Exclude<Role, null>, Set<Action>> = {
     owner: new Set(['read', 'edit', 'rename', 'share', 'delete']),
     editor: new Set(['read', 'edit', 'rename']),
     viewer: new Set(['read']),
