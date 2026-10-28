@@ -2,7 +2,7 @@ import { getCurrentUserId } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { documentShares, users as usersTable } from '@/lib/schema';
 import { eq, and } from 'drizzle-orm';
-import { apiError, apiSuccess } from '@/lib/api';
+import { apiError, apiSuccess, isUuid } from '@/lib/api';
 import { getRole, can } from '@/lib/access';
 import { shareDocumentSchema, revokeShareSchema } from '@/lib/validation';
 
@@ -13,9 +13,14 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   }
 
   const { id } = await params;
+  if (!isUuid(id)) {
+    return apiError(404, 'NOT_FOUND', 'Document not found');
+  }
 
+  // Collaborator list reveals other members' emails, so only the owner
+  // (who can also manage sharing) gets to see it — not every reader.
   const role = await getRole(userId, id);
-  if (!can(role, 'read')) {
+  if (!can(role, 'share')) {
     return apiError(404, 'NOT_FOUND', 'Document not found');
   }
 
@@ -34,6 +39,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   }
 
   const { id } = await params;
+  if (!isUuid(id)) {
+    return apiError(404, 'NOT_FOUND', 'Document not found');
+  }
 
   try {
     const body = await request.json();
@@ -95,6 +103,10 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
   }
 
   const { id } = await params;
+  if (!isUuid(id)) {
+    return apiError(404, 'NOT_FOUND', 'Document not found');
+  }
+
   const url = new URL(request.url);
   const userToRevoke = url.searchParams.get('userId');
 

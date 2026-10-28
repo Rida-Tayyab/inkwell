@@ -1,10 +1,11 @@
 import { getCurrentUserId } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { documents } from '@/lib/schema';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { apiError, apiSuccess } from '@/lib/api';
 import { getRole, can } from '@/lib/access';
 import { updateDocumentSchema } from '@/lib/validation';
+import { isUuid } from '@/lib/api';
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const userId = await getCurrentUserId();
@@ -13,6 +14,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   }
 
   const { id } = await params;
+  if (!isUuid(id)) {
+    return apiError(404, 'NOT_FOUND', 'Document not found');
+  }
 
   const role = await getRole(userId, id);
   if (!can(role, 'read')) {
@@ -37,6 +41,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   }
 
   const { id } = await params;
+  if (!isUuid(id)) {
+    return apiError(404, 'NOT_FOUND', 'Document not found');
+  }
 
   try {
     const body = await request.json();
@@ -55,16 +62,14 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       return apiError(404, 'NOT_FOUND', 'Document not found');
     }
 
-    // Check for stale writes
-    if (baseVersion !== doc.version) {
-      return apiError(409, 'CONFLICT', 'Document was modified elsewhere. Please reload.');
-    }
-
     // Check rename permission if title is being changed
     if (title !== undefined && title !== doc.title && !can(role, 'rename')) {
       return apiError(403, 'FORBIDDEN', 'You do not have permission to rename this document');
     }
 
+    // Atomic conditional update: the version check and the write happen in a
+    // single statement, so two concurrent saves with the same baseVersion
+    // can't both succeed (one write would otherwise silently clobber the other).
     const updated = await db
       .update(documents)
       .set({
@@ -73,9 +78,13 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         version: doc.version + 1,
         updatedAt: new Date(),
       })
-      .where(eq(documents.id, id))
+      .where(and(eq(documents.id, id), eq(documents.version, baseVersion)))
       .returning()
       .then((rows) => rows[0]);
+
+    if (!updated) {
+      return apiError(409, 'CONFLICT', 'Document was modified elsewhere. Please reload.');
+    }
 
     return apiSuccess({ ...updated, role });
   } catch (error: any) {
@@ -94,6 +103,9 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
   }
 
   const { id } = await params;
+  if (!isUuid(id)) {
+    return apiError(404, 'NOT_FOUND', 'Document not found');
+  }
 
   const role = await getRole(userId, id);
   if (!can(role, 'delete')) {
