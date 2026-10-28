@@ -50,8 +50,8 @@ export default function RichEditor({ content, onChange, readOnly = false }: Edit
   return (
     <div className="flex flex-col h-full bg-[var(--desk)]">
       {!readOnly && editor && <Toolbar editor={editor} />}
-      <div className="flex-1 overflow-auto flex justify-center py-8 px-4">
-        <div className="w-full max-w-[760px] bg-[var(--paper)] border-[1.5px] border-[var(--ink)] shadow-hard">
+      <div className="flex-1 overflow-auto bg-[var(--paper)]">
+        <div className="max-w-[760px] mx-auto">
           <EditorContent editor={editor} />
         </div>
       </div>
